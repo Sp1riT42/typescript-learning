@@ -25,7 +25,7 @@ export function renderSearchFormBlock (arrivalDate: string, departureDate: strin
   renderBlock(
     'search-form-block',
     `
-    <form>
+    <form id="form">
       <fieldset class="search-filedset">
         <div class="row">
           <div>
@@ -52,11 +52,58 @@ export function renderSearchFormBlock (arrivalDate: string, departureDate: strin
             <input id="max-price" type="text" value="" name="price" class="max-price" />
           </div>
           <div>
-            <div><button>Найти</button></div>
+            <div><button class="form__btn">Найти</button></div>
           </div>
         </div>
       </fieldset>
     </form>
     `
   )
+
+  const btnSearch = document.querySelector('.form__btn')
+  const checkInDate:HTMLInputElement = document.querySelector('#check-in-date')
+  const checkOutDate:HTMLInputElement = document.querySelector('#check-out-date')
+  const maxPrice:HTMLInputElement = document.querySelector('#max-price')
+
+  interface ISearchFormData {
+    checkInDate: string,
+    checkOutDate: string,
+    maxPrice: number
+  }
+
+  interface IPlace {}
+
+  const placeF = (placeVal: IPlace | Error) => {
+    console.log(placeVal)
+    return placeVal
+  }
+  const search = (evt: Event, place) => {
+    evt.preventDefault()
+    const checkInDateValue = checkInDate.value
+    const checkOutDateValue = checkOutDate.value
+    const maxPriceValue = +maxPrice.value
+    const data:ISearchFormData = {
+      checkInDate:checkInDateValue,
+      checkOutDate: checkOutDateValue,
+      maxPrice: maxPriceValue
+    }
+    searchResult(data)
+    setTimeout(() => {
+      const rand = Math.round(Math.random())
+      if(rand) {
+        const val:IPlace = {}
+        place(val)
+      } else {
+        const val = Error('Error!')
+        place(val)
+      }
+
+    },2000)
+  }
+
+
+  const searchResult = (data: ISearchFormData) => {
+    console.log(data)
+  }
+  btnSearch.addEventListener('click', (evt)=>search(evt,placeF))
 }
