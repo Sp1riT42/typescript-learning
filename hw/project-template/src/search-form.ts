@@ -1,4 +1,5 @@
 import { renderBlock } from './lib.js'
+import {renderSearchResultsBlock} from './search-results.js';
 
 export function renderSearchFormBlock (arrivalDate: string, departureDate: string) {
   const date = new Date()
@@ -71,7 +72,15 @@ export function renderSearchFormBlock (arrivalDate: string, departureDate: strin
     maxPrice: number
   }
 
-  interface IPlace {}
+  interface IPlace {
+    id: number,
+    name: string,
+    description: string,
+    image: string,
+    remoteness: number,
+    bookedDates: [],
+    price: number
+  }
 
   const placeF = (placeVal: IPlace | Error) => {
     console.log(placeVal)
@@ -88,17 +97,25 @@ export function renderSearchFormBlock (arrivalDate: string, departureDate: strin
       maxPrice: maxPriceValue
     }
     searchResult(data)
-    setTimeout(() => {
-      const rand = Math.round(Math.random())
-      if(rand) {
-        const val:IPlace = {}
-        place(val)
-      } else {
-        const val = Error('Error!')
-        place(val)
-      }
+    // setTimeout(() => {
+    //   const rand = Math.round(Math.random())
+    //   if(rand) {
+    //     const val:IPlace = {}
+    //     place(val)
+    //   } else {
+    //     const val = Error('Error!')
+    //     place(val)
+    //   }
+    //
+    // },2000)
+    fetch('http://localhost:3000/places')
+      .then((res) => res.json())
+      .then((places):void => {
+        const result = place(places)
+        renderSearchResultsBlock(result)
+      })
+      .catch(err => place(err))
 
-    },2000)
   }
 
 

@@ -8,7 +8,7 @@ export function renderUserBlock (userName: string, avatarURL: string, favoriteIt
     'user-block',
     `
     <div class="header-container">
-      <img class="avatar" src="${avatarURL}" alt="Wade Warren" />
+      <img class="avatar" src="${avatarURL}" alt="Wade Warren"/>
       <div class="info">
           <p class="name">${userName}</p>
           <p class="fav">
@@ -19,3 +19,4 @@ export function renderUserBlock (userName: string, avatarURL: string, favoriteIt
     `
   )
 }
+
