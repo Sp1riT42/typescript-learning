@@ -4,9 +4,11 @@
     "module": "es2015",
     "target": "es2015",
     "moduleResolution": "Node",
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "allowJs": true
   },
-  "files": ["src/index.ts"],
+  //"files": ["src/index.ts"],
+  "include": ["src/*"],
   "exclude": [
     "node_modules"
   ]
