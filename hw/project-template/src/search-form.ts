@@ -1,5 +1,6 @@
 import { renderBlock } from './lib.js'
 import {renderSearchResultsBlock} from './search-results.js';
+import {FlatRentSdk} from './flat-rent-sdk.js'
 
 export function renderSearchFormBlock (arrivalDate: string, departureDate: string) {
   const date = new Date()
@@ -34,10 +35,10 @@ export function renderSearchFormBlock (arrivalDate: string, departureDate: strin
             <input id="city" type="text" disabled value="Санкт-Петербург" />
             <input type="hidden" disabled value="59.9386,30.3141" />
           </div>
-         <!-- <div class="providers">
-            <label><input type="checkbox" name="provider" value="homy" checked /> Homy</label>
-            <label><input type="checkbox" name="provider" value="flat-rent" checked /> FlatRent</label>
-          </div> -->
+          <div class="providers">
+            <label><input id="homy" type="checkbox" name="provider" value="homy" checked /> Homy</label>
+            <label><input id="flat-rent" type="checkbox" name="provider" value="flat-rent" checked /> FlatRent</label>
+          </div>
         </div>
         <div class="row">
           <div>
@@ -52,6 +53,7 @@ export function renderSearchFormBlock (arrivalDate: string, departureDate: strin
             <label for="max-price">Макс. цена суток</label>
             <input id="max-price" type="text" value="" name="price" class="max-price" />
           </div>
+          
           <div>
             <div><button class="form__btn">Найти</button></div>
           </div>
@@ -62,9 +64,12 @@ export function renderSearchFormBlock (arrivalDate: string, departureDate: strin
   )
 
   const btnSearch = document.querySelector('.form__btn')
+  const city:HTMLInputElement = document.querySelector('#city')
   const checkInDate:HTMLInputElement = document.querySelector('#check-in-date')
   const checkOutDate:HTMLInputElement = document.querySelector('#check-out-date')
   const maxPrice:HTMLInputElement = document.querySelector('#max-price')
+  const providerHomy:HTMLInputElement = document.querySelector('#homy')
+  const providerFlatRent:HTMLInputElement = document.querySelector('#flat-rent')
 
   interface ISearchFormData {
     checkInDate: string,
@@ -86,8 +91,9 @@ export function renderSearchFormBlock (arrivalDate: string, departureDate: strin
     console.log(placeVal)
     return placeVal
   }
-  const search = (evt: Event, place) => {
+  const search = async (evt: Event, place) => {
     evt.preventDefault()
+    const cityValue = city.value
     const checkInDateValue = checkInDate.value
     const checkOutDateValue = checkOutDate.value
     const maxPriceValue = +maxPrice.value
@@ -96,18 +102,31 @@ export function renderSearchFormBlock (arrivalDate: string, departureDate: strin
       checkOutDate: checkOutDateValue,
       maxPrice: maxPriceValue
     }
-    searchResult(data)
-    // setTimeout(() => {
-    //   const rand = Math.round(Math.random())
-    //   if(rand) {
-    //     const val:IPlace = {}
-    //     place(val)
-    //   } else {
-    //     const val = Error('Error!')
-    //     place(val)
-    //   }
-    //
-    // },2000)
+    let allSearchValue = []
+
+    if(providerHomy.checked) {
+      console.log('homy checked')
+      allSearchValue = [searchResult(data), ...allSearchValue]
+      console.log(allSearchValue)
+    }
+    if(providerFlatRent.checked) {
+
+      console.log('flat-rent checked', cityValue, new Date(checkInDateValue), new Date(checkOutDateValue))
+      const flatRentSDK = new FlatRentSdk()
+      flatRentSDK.search({
+        'city': cityValue,
+        'checkInDate': new Date(checkInDateValue),
+        'checkOutDate': new Date(checkOutDateValue),
+        'priceLimit': maxPriceValue
+      }).then(res => {
+        console.log(res)
+        allSearchValue = [...res, ...allSearchValue]
+
+        console.log(allSearchValue)
+      })
+
+    }
+
     fetch('http://localhost:3000/places')
       .then((res) => res.json())
       .then((places):void => {
@@ -121,6 +140,7 @@ export function renderSearchFormBlock (arrivalDate: string, departureDate: strin
 
   const searchResult = (data: ISearchFormData) => {
     console.log(data)
+    return data
   }
   btnSearch.addEventListener('click', (evt)=>search(evt,placeF))
 }

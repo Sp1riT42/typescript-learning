@@ -2,6 +2,7 @@ import { renderBlock } from './lib.js'
 import {getFavoritesAmount, validateData, getUserData} from './index.js'
 import {renderUserBlock} from './user.js';
 
+
 export function renderSearchStubBlock () {
   renderBlock(
     'search-results-block',
