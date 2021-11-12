@@ -2,13 +2,13 @@
   "compilerOptions": {
     "outDir": "public/scripts",
     "module": "es2015",
-    "target": "es2015",
+    "target": "es2017",
     "moduleResolution": "Node",
     "allowSyntheticDefaultImports": true,
     "allowJs": true
   },
   //"files": ["src/index.ts"],
-  "include": ["src/*"],
+  "include": ["src/*","src/bookingService/domain/*"],
   "exclude": [
     "node_modules"
   ]
