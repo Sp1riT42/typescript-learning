@@ -22,31 +22,28 @@ interface UserData {
   avatarURL: string
 }
 
-export const getUserData = () => {
+export const getUserData = ():UserData => {
   localStorage.setItem('user', JSON.stringify({username: 'John Smith', avatarURL: '/img/avatar.png'}))
-  return  JSON.parse(localStorage.getItem('user')) as UserData
+  return  JSON.parse(localStorage.getItem('user'))
 }
 
-export const validateData = (data: any):UserData => {
-  console.log(data, data.username, data.avatarURL, typeof data, typeof data === 'object' ,  'username' in data, 'avatarURL' in data)
-  if(typeof data === 'object' && 'username' in data && 'avatarURL' in data) {
-    console.log(data)
-    return data
+export const isUserData = (data: unknown):data is UserData => {
+  return typeof data === 'object' && 'username' in data && 'avatarURL' in data
+}
+
+export const getFavoritesAmount = ():number => {
+  console.log(JSON.parse(localStorage.getItem('favoritesAmount')))
+  if(JSON.parse(localStorage.getItem('favoritesAmount')) !== null) {
+    return Object.keys(JSON.parse(localStorage.getItem('favoritesAmount'))).length
   }
+  return 0
 }
-
-export const getFavoritesAmount = () => {
-  return Object.keys(JSON.parse(localStorage.getItem('favoritesAmount'))).length
-}
-
-
 
 window.addEventListener('DOMContentLoaded', () => {
   userData = getUserData()
-  const data =  validateData(userData)
-  favoritesAmount = Number(getFavoritesAmount())
-  if(typeof favoritesAmount === 'number') {
-    renderUserBlock(data.username,data.avatarURL,favoritesAmount)
+  favoritesAmount = getFavoritesAmount()
+  if(isUserData(userData) && typeof favoritesAmount === 'number') {
+    renderUserBlock(userData.username, userData.avatarURL, favoritesAmount)
   }
   renderSearchFormBlock(nextDay, secondDay)
   renderSearchStubBlock()

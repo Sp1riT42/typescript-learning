@@ -1,6 +1,7 @@
 import { renderBlock } from './lib.js'
-import {getFavoritesAmount, validateData, getUserData} from './index.js'
+import {getFavoritesAmount, isUserData, getUserData} from './index.js'
 import {renderUserBlock} from './user.js';
+import {Apartments} from './bookingService/domain/apartments.js';
 
 
 export function renderSearchStubBlock () {
@@ -37,10 +38,54 @@ interface IPlace {
   price: number
 }
 
-let currentPLace: IPlace
+let currentPLace: Apartments[]
 let favoriteList = JSON.parse(localStorage.getItem('favoritesAmount'))
+let selectSort:HTMLSelectElement
+let resultList:HTMLSelectElement
+let favoritesElem:NodeList
+const renderApartmentList = (currentPLace: Apartments[], selectSort:HTMLSelectElement | undefined) => {
+  resultList.innerText = ''
+  const arr = [...currentPLace]
+  console.log(selectSort.value)
+  switch (selectSort.value){
+  case 'minPrice':
+    arr.sort((a, b) => a.price - b.price)
+    break
+  case 'maxPrice':
+    arr.sort((a, b) => b.price - a.price)
+    break
+  case 'closer':
+    arr.sort((a, b) => a.remoteness - b.remoteness)
+    break
+  }
 
-export function renderSearchResultsBlock (place:IPlace) {
+  arr.map((item:Apartments):void => {
+    resultList.insertAdjacentHTML('beforeend', `<li class="result">
+      <div class="result-container">
+      <div class="result-img-container">
+      <div class="favorites" data-index="${item.id}"></div>
+        <img class="result-img" src="${item.image}" alt="">
+        </div>
+        <div class="result-info">
+      <div class="result-info--header">
+        <p>${item.name}</p>
+      <p class="price">${item.price}&#8381;</p>
+      </div>
+      <div class="result-info--map"><i class="map-icon"></i> ${item.remoteness}км от вас</div>
+      <div class="result-info--descr">${item.description}</div>
+      <div class="result-info--footer">
+        <div>
+          <button>Забронировать</button>
+        </div>
+        </div>
+        </div>
+        </div>
+        </li>`)
+  })
+  favoritesElem = document.querySelectorAll('.favorites')
+  toggleFavoritesElem(favoritesElem)
+}
+export function renderSearchResultsBlock (place:Apartments[]) {
   console.log('renderSearchResultsBlock: ', place)
   currentPLace = place
   renderBlock(
@@ -50,78 +95,41 @@ export function renderSearchResultsBlock (place:IPlace) {
         <p>Результаты поиска</p>
         <div class="search-results-filter">
             <span><i class="icon icon-filter"></i> Сортировать:</span>
-            <select>
-                <option selected="">Сначала дешёвые</option>
-                <option selected="">Сначала дорогие</option>
-                <option>Сначала ближе</option>
+            <select id="selectSort">
+                <option value="minPrice" >Сначала дешёвые</option>
+                <option value="maxPrice">Сначала дорогие</option>
+                <option value="closer">Сначала ближе</option>
             </select>
         </div>
     </div>
     <ul class="results-list">
-      <li class="result">
-        <div class="result-container">
-          <div class="result-img-container">
-            <div class="favorites" data-index="1"></div>
-            <img class="result-img" src="./img/result-1.png" alt="">
-          </div>	
-          <div class="result-info">
-            <div class="result-info--header">
-              <p>YARD Residence Apart-hotel</p>
-              <p class="price">13000&#8381;</p>
-            </div>
-            <div class="result-info--map"><i class="map-icon"></i> 2.5км от вас</div>
-            <div class="result-info--descr">Комфортный апарт-отель в самом сердце Санкт-Петербрга. К услугам гостей номера с видом на город и бесплатный Wi-Fi.</div>
-            <div class="result-info--footer">
-              <div>
-                <button>Забронировать</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </li>
-      <li class="result">
-        <div class="result-container">
-          <div class="result-img-container">
-            <div class="favorites" data-index="2"></div>
-            <img class="result-img" src="./img/result-2.png" alt="">
-          </div>	
-          <div class="result-info">
-            <div class="result-info--header">
-              <p>Akyan St.Petersburg</p>
-              <p class="price">13000&#8381;</p>
-            </div>
-            <div class="result-info--map"><i class="map-icon"></i> 1.1км от вас</div>
-            <div class="result-info--descr">Отель Akyan St-Petersburg с бесплатным Wi-Fi на всей территории расположен в историческом здании Санкт-Петербурга.</div>
-            <div class="result-info--footer">
-              <div>
-                <button>Забронировать</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </li>
     </ul>
     `
   )
 
   const resultsList:HTMLElement = document.querySelector('.results-list')
-  const favoritesElem:NodeList = document.querySelectorAll('.favorites')
+
+  resultList = document.querySelector('.results-list')
+  selectSort = document.querySelector('#selectSort')
+  renderApartmentList(currentPLace, selectSort)
+
+  selectSort.addEventListener('change', ():void => {
+    renderApartmentList(currentPLace, selectSort)
+  })
 
   toggleFavoritesElem(favoritesElem)
 
   console.log(resultsList)
-  resultsList.addEventListener('click', (evt) => {
+  resultsList.addEventListener('click', (evt:Event):void => {
     console.log('click')
     const target = evt.target as HTMLElement
     const classList = target.classList
-    //console.log(classList)
     for(const val of classList) {
       console.log(val)
       if(val === 'favorites') {
-        const idx = Number(target.dataset.index)
+        const idx = target.dataset.index
         console.log(idx)
         toggleFavoriteItem(idx,favoritesElem)
-
         break
       } else {
         console.log(JSON.parse(localStorage.getItem('favoritesAmount')))
@@ -133,12 +141,15 @@ export function renderSearchResultsBlock (place:IPlace) {
 
 
 
+
 let favoritesAmount: unknown
 let userData: unknown
-const toggleFavoritesElem = (favoritesElem:NodeList) => {
+const toggleFavoritesElem = (favoritesElem:NodeList):void => {
+  if(favoriteList === null) return null
   for(let i = 0; i<favoritesElem.length; i++) {
     const elem = favoritesElem[i] as HTMLElement
-    if(Number(elem.dataset.index) in favoriteList) {
+    console.log(favoriteList, elem.dataset.index)
+    if(elem.dataset.index in favoriteList) {
       elem.classList.add('active')
     } else {
       elem.classList.remove('active')
@@ -147,14 +158,15 @@ const toggleFavoritesElem = (favoritesElem:NodeList) => {
 
 }
 
-const toggleFavoriteItem = (idx: number, favoritesElem: NodeList) => {
-  if(idx in favoriteList) {
+const toggleFavoriteItem = (idx: string, favoritesElem: NodeList):void => {
+  if(favoriteList === null) favoriteList = {}
+  if(idx in favoriteList && favoriteList ) {
     console.log(idx in favoriteList)
     delete favoriteList[idx]
     toggleFavoritesElem(favoritesElem)
   } else {
     favoriteList = {
-      [idx]: currentPLace[idx],
+      [idx]: currentPLace.find((item) => item.id === idx),
       ...favoriteList
     }
     toggleFavoritesElem(favoritesElem)
@@ -162,9 +174,8 @@ const toggleFavoriteItem = (idx: number, favoritesElem: NodeList) => {
 
   localStorage.setItem('favoritesAmount', JSON.stringify(favoriteList))
   userData = getUserData()
-  const data =  validateData(userData)
-  favoritesAmount = Number(getFavoritesAmount())
-  if(typeof favoritesAmount === 'number') {
-    renderUserBlock(data.username,data.avatarURL,favoritesAmount)
+  favoritesAmount = getFavoritesAmount()
+  if(isUserData(userData)  && typeof favoritesAmount === 'number') {
+    renderUserBlock(userData.username,userData.avatarURL,favoritesAmount)
   }
 }
