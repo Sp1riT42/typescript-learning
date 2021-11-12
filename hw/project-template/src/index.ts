@@ -24,17 +24,18 @@ interface UserData {
 
 export const getUserData = ():UserData => {
   localStorage.setItem('user', JSON.stringify({username: 'John Smith', avatarURL: '/img/avatar.png'}))
-  return  JSON.parse(localStorage.getItem('user'))
+  return  JSON.parse(localStorage.getItem('user') as string)
 }
 
 export const isUserData = (data: unknown):data is UserData => {
-  return typeof data === 'object' && 'username' in data && 'avatarURL' in data
+  return typeof data === 'object' && data !== null && 'username' in data && 'avatarURL' in data
 }
 
 export const getFavoritesAmount = ():number => {
-  console.log(JSON.parse(localStorage.getItem('favoritesAmount')))
-  if(JSON.parse(localStorage.getItem('favoritesAmount')) !== null) {
-    return Object.keys(JSON.parse(localStorage.getItem('favoritesAmount'))).length
+  //console.log(JSON.parse(localStorage.getItem('favoritesAmount')))
+  const result: string | null = localStorage.getItem('favoritesAmount')
+  if(result !== null) {
+    return Object.keys(JSON.parse(result)).length
   }
   return 0
 }

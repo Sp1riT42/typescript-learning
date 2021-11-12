@@ -16,7 +16,7 @@ export function renderSearchStubBlock () {
   )
 }
 
-export function renderEmptyOrErrorSearchBlock (reasonMessage) {
+export function renderEmptyOrErrorSearchBlock (reasonMessage:string) {
   renderBlock(
     'search-results-block',
     `
@@ -28,23 +28,28 @@ export function renderEmptyOrErrorSearchBlock (reasonMessage) {
   )
 }
 
-interface IPlace {
-  id: number,
-  name: string,
-  description: string,
-  image: string,
-  remoteness: number,
-  bookedDates: [],
-  price: number
+// interface IPlace {
+//   id: number,
+//   name: string,
+//   description: string,
+//   image: string,
+//   remoteness: number,
+//   bookedDates: [],
+//   price: number
+// }
+
+interface IFavoriteList {
+  [key: string | number]: string | number | Apartments
 }
 
 let currentPLace: Apartments[]
-let favoriteList = JSON.parse(localStorage.getItem('favoritesAmount'))
-let selectSort:HTMLSelectElement
-let resultList:HTMLSelectElement
+let favoriteList:string | null | IFavoriteList= localStorage.getItem('favoritesAmount')
+if(favoriteList !== null) favoriteList = JSON.parse(favoriteList)
+let selectSort:HTMLSelectElement | null
+let resultList:HTMLSelectElement | null
 let favoritesElem:NodeList
-const renderApartmentList = (currentPLace: Apartments[], selectSort:HTMLSelectElement | undefined) => {
-  resultList.innerText = ''
+const renderApartmentList = (currentPLace: Apartments[], selectSort:HTMLSelectElement) => {
+  if (resultList) resultList.innerText = ''
   const arr = [...currentPLace]
   console.log(selectSort.value)
   switch (selectSort.value){
@@ -55,12 +60,17 @@ const renderApartmentList = (currentPLace: Apartments[], selectSort:HTMLSelectEl
     arr.sort((a, b) => b.price - a.price)
     break
   case 'closer':
-    arr.sort((a, b) => a.remoteness - b.remoteness)
+    arr.sort((a, b) => {
+      if(a.remoteness !== undefined && b.remoteness !== undefined){
+        return a.remoteness - b.remoteness
+      } else {
+        return 0}
+    })
     break
   }
 
   arr.map((item:Apartments):void => {
-    resultList.insertAdjacentHTML('beforeend', `<li class="result">
+    if (resultList) resultList.insertAdjacentHTML('beforeend', `<li class="result">
       <div class="result-container">
       <div class="result-img-container">
       <div class="favorites" data-index="${item.id}"></div>
@@ -107,35 +117,41 @@ export function renderSearchResultsBlock (place:Apartments[]) {
     `
   )
 
-  const resultsList:HTMLElement = document.querySelector('.results-list')
+  //const resultsList:HTMLElement | null = document.querySelector('.results-list')
 
   resultList = document.querySelector('.results-list')
   selectSort = document.querySelector('#selectSort')
-  renderApartmentList(currentPLace, selectSort)
-
-  selectSort.addEventListener('change', ():void => {
+  if(selectSort !== null) {
     renderApartmentList(currentPLace, selectSort)
-  })
+
+    selectSort.addEventListener('change', ():void => {
+      renderApartmentList(currentPLace, selectSort as HTMLSelectElement)
+    })
+  }
+  if(resultList !== null) {
+    resultList.addEventListener('click', (evt:Event):void => {
+      console.log('click')
+      const target = evt.target as HTMLElement
+      const classList = target.classList
+      for(const val of classList) {
+        console.log(val)
+        if(val === 'favorites') {
+          const idx = target.dataset['index']
+          console.log(idx)
+          toggleFavoriteItem(idx as string,favoritesElem)
+          break
+        } else {
+          console.log(JSON.parse(localStorage.getItem('favoritesAmount') as string))
+        }
+      }
+    })
+  }
+
 
   toggleFavoritesElem(favoritesElem)
 
-  console.log(resultsList)
-  resultsList.addEventListener('click', (evt:Event):void => {
-    console.log('click')
-    const target = evt.target as HTMLElement
-    const classList = target.classList
-    for(const val of classList) {
-      console.log(val)
-      if(val === 'favorites') {
-        const idx = target.dataset.index
-        console.log(idx)
-        toggleFavoriteItem(idx,favoritesElem)
-        break
-      } else {
-        console.log(JSON.parse(localStorage.getItem('favoritesAmount')))
-      }
-    }
-  })
+  console.log(resultList)
+
 }
 
 
@@ -145,33 +161,33 @@ export function renderSearchResultsBlock (place:Apartments[]) {
 let favoritesAmount: unknown
 let userData: unknown
 const toggleFavoritesElem = (favoritesElem:NodeList):void => {
-  if(favoriteList === null) return null
-  for(let i = 0; i<favoritesElem.length; i++) {
-    const elem = favoritesElem[i] as HTMLElement
-    console.log(favoriteList, elem.dataset.index)
-    if(elem.dataset.index in favoriteList) {
-      elem.classList.add('active')
-    } else {
-      elem.classList.remove('active')
+  if(favoriteList !== null && typeof favoriteList === 'object') {
+    for (let i = 0; i < favoritesElem.length; i++) {
+      const elem = favoritesElem[i] as HTMLElement
+      console.log(favoriteList, elem.dataset['index'])
+      if (elem.dataset['index'] as string in favoriteList) {
+        elem.classList.add('active')
+      } else {
+        elem.classList.remove('active')
+      }
     }
   }
-
 }
 
 const toggleFavoriteItem = (idx: string, favoritesElem: NodeList):void => {
-  if(favoriteList === null) favoriteList = {}
-  if(idx in favoriteList && favoriteList ) {
-    console.log(idx in favoriteList)
-    delete favoriteList[idx]
-    toggleFavoritesElem(favoritesElem)
-  } else {
-    favoriteList = {
-      [idx]: currentPLace.find((item) => item.id === idx),
-      ...favoriteList
+  if(favoriteList !== null && typeof favoriteList === 'object') {
+    if (idx in favoriteList) {
+      //console.log(idx in favoriteList[idx])
+      delete favoriteList[idx]
+      toggleFavoritesElem(favoritesElem)
+    } else {
+      favoriteList = {
+        [idx]: currentPLace.find((item) => item.id === idx) as Apartments,
+        ...favoriteList
+      }
+      toggleFavoritesElem(favoritesElem)
     }
-    toggleFavoritesElem(favoritesElem)
   }
-
   localStorage.setItem('favoritesAmount', JSON.stringify(favoriteList))
   userData = getUserData()
   favoritesAmount = getFavoritesAmount()

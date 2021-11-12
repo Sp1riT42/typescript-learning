@@ -7,6 +7,7 @@ export class jsonAPIProvider implements Provider{
   public static provider = 'jsonAPI'
   public static apiURL = 'http://localhost:3000/places'
   public find(filter: SearchFilterJSON):Promise<Apartments[]> {
+    console.log(filter)
     return HttpHelper.fetchAsJson<ApartmentsListResponseJSONApi>(jsonAPIProvider.apiURL)
       .then((resp) => this.convertBookListResponse(resp))
   }
