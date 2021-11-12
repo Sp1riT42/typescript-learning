@@ -26,7 +26,7 @@ export class rentSDKProvider implements Provider{
       item.details,
       item.totalPrice,
       item.photos,
-      null,
+      undefined,
       item.bookedDates,
 
     )

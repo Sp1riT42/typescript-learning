@@ -1,6 +1,5 @@
 import { renderBlock } from './lib.js'
 import {renderSearchResultsBlock} from './search-results.js';
-import {FlatRentSdk} from './flat-rent-sdk.js'
 import {rentSDKProvider} from './bookingService/providers/rentSDK/rentSDKProvider.js';
 import {jsonAPIProvider} from './bookingService/providers/jsonAPI/jsonAPIProvider.js';
 import {Apartments} from './bookingService/domain/apartments';
@@ -67,12 +66,12 @@ export function renderSearchFormBlock (arrivalDate: string, departureDate: strin
   )
 
   const btnSearch = document.querySelector('.form__btn')
-  const city:HTMLInputElement = document.querySelector('#city')
-  const checkInDate:HTMLInputElement = document.querySelector('#check-in-date')
-  const checkOutDate:HTMLInputElement = document.querySelector('#check-out-date')
-  const maxPrice:HTMLInputElement = document.querySelector('#max-price')
-  const providerHomy:HTMLInputElement = document.querySelector('#homy')
-  const providerFlatRent:HTMLInputElement = document.querySelector('#flat-rent')
+  const city:HTMLInputElement | null = document.querySelector('#city')
+  const checkInDate:HTMLInputElement | null = document.querySelector('#check-in-date')
+  const checkOutDate:HTMLInputElement | null = document.querySelector('#check-out-date')
+  const maxPrice:HTMLInputElement | null = document.querySelector('#max-price')
+  const providerHomy:HTMLInputElement | null = document.querySelector('#homy')
+  const providerFlatRent:HTMLInputElement | null = document.querySelector('#flat-rent')
 
   interface ISearchFormData {
     city: string,
@@ -95,11 +94,9 @@ export function renderSearchFormBlock (arrivalDate: string, departureDate: strin
     console.log(placeVal)
     return placeVal
   }
-  // interface IPlaceF {
-  //   (placeVal: IPlace[] | Error):IPlace[] | Error
-  // }
+
   const search = (searchData: ISearchFormData, place:((placeVal: IPlace[] | Error) => IPlace[] | Error)):void => {
-    let allSearchValue = []
+    console.log(place)
     const allProviders = []
     const jsonAPIex = new jsonAPIProvider()
     const rentSDKEx = new rentSDKProvider()
@@ -115,47 +112,12 @@ export function renderSearchFormBlock (arrivalDate: string, departureDate: strin
       'checkOutDate': new Date(searchData.checkOutDate),
       'priceLimit': searchData.maxPrice
     }
-    if(providerHomy.checked) {
+    if(providerHomy !== null && providerHomy.checked) {
       console.log('homy checked')
-      allSearchValue = [searchResult(searchData), ...allSearchValue]
-      console.log(allSearchValue)
-
       allProviders.push(jsonAPIex)
-      // const jsonAPIList = jsonAPIex.find({
-      //   'city': searchData.city,
-      //   'checkInDate': searchData.checkInDate,
-      //   'checkOutDate': searchData.checkOutDate,
-      //   'maxPrice': searchData.maxPrice
-      // }).then(res => {
-      //   console.log(res)
-      // })
     }
-    if(providerFlatRent.checked) {
-      // console.log('flat-rent checked', cityValue, new Date(checkInDateValue), new Date(checkOutDateValue))
-
+    if(providerFlatRent !== null && providerFlatRent.checked) {
       allProviders.push(rentSDKEx)
-      // const rentSDKList = rentSDKEx.find({
-      //   'city': searchData.city,
-      //   'checkInDate': new Date(searchData.checkInDate),
-      //   'checkOutDate': new Date(searchData.checkOutDate),
-      //   'priceLimit': searchData.maxPrice
-      // }).then(res => {
-      //   console.log(res)
-      // })
-
-
-      const flatRentSDK = new FlatRentSdk()
-      flatRentSDK.search({
-        'city': searchData.city,
-        'checkInDate': new Date(searchData.checkInDate),
-        'checkOutDate': new Date(searchData.checkOutDate),
-        'priceLimit': searchData.maxPrice
-      }).then(res => {
-        console.log(res)
-        allSearchValue = [...res, ...allSearchValue]
-        console.log(allSearchValue)
-      })
-
     }
 
     Promise.all(allProviders.map((provider: jsonAPIProvider | rentSDKProvider) => {
@@ -165,47 +127,34 @@ export function renderSearchFormBlock (arrivalDate: string, departureDate: strin
       if(provider === rentSDKEx ) {
         return provider.find(rentSDKFilter)
       }
+      return null
     })).then((res) => {
-      const allResults: Apartments[] = [].concat(...res)
-      console.log(allResults)
-      renderSearchResultsBlock(allResults)
+      if(res !== undefined) {
+        const allResults: Apartments[] = [].concat(...res as [])
+        console.log(allResults)
+        renderSearchResultsBlock(allResults)
+      }
     })
-
-    // fetch('http://localhost:3000/places')
-    //   .then((res) => res.json())
-    //   .then((places):void => {
-    //     //const x:IPlace[] = [{id:1, name: 'ddd'}]
-    //     let curPlaces = []
-    //     console.log(curPlaces)
-    //     //console.log(places, Array.prototype.slice.call(places))
-    //     for(const val in places) {
-    //       curPlaces = [places[val], ...curPlaces]
-    //     }
-    //     const result = place(curPlaces as IPlace[])
-    //     console.log(result)
-    //     renderSearchResultsBlock(result as IPlace[])
-    //   })
-    //   .catch(err => place(err))
-
   }
 
+  if(btnSearch !== null) {
+    btnSearch.addEventListener('click', (evt):void=>{
+      evt.preventDefault()
+      if(city && checkInDate && checkOutDate && maxPrice) {
+        const cityValue = city.value
+        const checkInDateValue = checkInDate.value
+        const checkOutDateValue = checkOutDate.value
+        const maxPriceValue = +maxPrice.value
+        const data:ISearchFormData = {
+          city: cityValue,
+          checkInDate:checkInDateValue,
+          checkOutDate: checkOutDateValue,
+          maxPrice: maxPriceValue
+        }
+        search(data,placeF)
+      }
 
-  const searchResult = (data: ISearchFormData) => {
-    console.log(data)
-    return data
+    })
   }
-  btnSearch.addEventListener('click', (evt):void=>{
-    evt.preventDefault()
-    const cityValue = city.value
-    const checkInDateValue = checkInDate.value
-    const checkOutDateValue = checkOutDate.value
-    const maxPriceValue = +maxPrice.value
-    const data:ISearchFormData = {
-      city: cityValue,
-      checkInDate:checkInDateValue,
-      checkOutDate: checkOutDateValue,
-      maxPrice: maxPriceValue
-    }
-    search(data,placeF)
-  })
+
 }
